@@ -123,8 +123,22 @@ def df_average(df, weights_column):
             v = df[col].iloc[0]
         values[col] = v
     return values
-    
+
 def ismember(a, b):
+    '''
+    Works like MATLAB's ismember: checks each element of an array a is a member
+    of the second array b
+    
+    PARAMETERS:
+    ----------
+        a - array to be checked
+        b - array to be checked against
+        
+    RETURNS:
+    --------
+        I - logical array the same shape as a
+    '''
+    
     bind = {}
     for i, elt in enumerate(b):
         if elt not in bind:
