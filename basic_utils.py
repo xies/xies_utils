@@ -148,3 +148,5 @@ def ismember(a, b):
 def overlap(a, b):
     return min(a[1],b[1]) - max(a[0],b[0])
 
+def nonans(x):
+    return x[~np.isnan(x)]
