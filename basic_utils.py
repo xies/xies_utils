@@ -124,6 +124,26 @@ def df_average(df, weights_column):
         values[col] = v
     return values
 
+
+def plot_bin_means(X,Y,bin_edges):
+    """
+    Plot the mean/std values of Y given bin_edges in X
+    
+    """
+    
+    which_bin = np.digitize(X,bin_edges)
+    Nbins = len(bin_edges)-1
+    means = np.zeros(Nbins)
+    stds = np.zeros(Nbins)
+    bin_centers = np.zeros(Nbins)
+    for b in range(Nbins):
+        y = Y[which_bin == b+1]
+        bin_centers[b] = (bin_edges[b] + bin_edges[b+1]) / 2
+        means[b] = y.mean()
+        stds[b] = y.std() / np.sqrt(len(y))
+    plt.errorbar(bin_centers,means,stds)
+
+    
 def ismember(a, b):
     '''
     Works like MATLAB's ismember: checks each element of an array a is a member
