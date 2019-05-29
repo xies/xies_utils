@@ -164,9 +164,11 @@ def ismember(a, b):
         if elt not in bind:
             bind[elt] = i
     return [bind.get(itm, False) for itm in a]  # None can be replaced by any other "not in b" value
-
+            
+            
 def overlap(a, b):
     return min(a[1],b[1]) - max(a[0],b[0])
 
 def nonans(x):
     return x[~np.isnan(x)]
+             
