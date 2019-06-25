@@ -8,6 +8,7 @@ Created on Mon Dec 12 17:11:53 2016
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import random
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def plot_stack(im1,cmap1 = 'gray'):
@@ -169,6 +170,14 @@ def ismember(a, b):
 def overlap(a, b):
     return min(a[1],b[1]) - max(a[0],b[0])
 
+<<<<<<< Updated upstream
 def nonans(x):
     return x[~np.isnan(x)]
              
+=======
+def jitter(x,sigma):
+    N = len(x)
+    noise = random.rand(N)
+    return x + (noise - 0.5) * sigma
+    
+>>>>>>> Stashed changes
