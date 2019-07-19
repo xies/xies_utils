@@ -126,6 +126,63 @@ def df_average(df, weights_column):
     return values
 
 
+def smooth(x,window_len=11,window='hanning'):
+    """smooth the data using a window with requested size.
+    
+    This method is based on the convolution of a scaled window with the signal.
+    The signal is prepared by introducing reflected copies of the signal 
+    (with the window size) in both ends so that transient parts are minimized
+    in the begining and end part of the output signal.
+    
+    input:
+        x: the input signal 
+        window_len: the dimension of the smoothing window; should be an odd integer
+        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+            flat window will produce a moving average smoothing.
+
+    output:
+        the smoothed signal
+        
+    example:
+
+    t=linspace(-2,2,0.1)
+    x=sin(t)+randn(len(t))*0.1
+    y=smooth(x)
+    
+    see also: 
+    
+    numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
+    scipy.signal.lfilter
+ 
+    TODO: the window parameter could be the window itself if an array instead of a string
+    NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
+    """
+
+    if x.ndim != 1:
+        raise ValueError, "smooth only accepts 1 dimension arrays."
+
+    if x.size < window_len:
+        raise ValueError, "Input vector needs to be bigger than window size."
+
+
+    if window_len<3:
+        return x
+
+
+    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+
+
+    s=np.r_[x[window_len-1:0:-1],x,x[-2:-window_len-1:-1]]
+    #print(len(s))
+    if window == 'flat': #moving average
+        w=np.ones(window_len,'d')
+    else:
+        w=eval('np.'+window+'(window_len)')
+
+    y=np.convolve(w/w.sum(),s,mode='valid')
+    return y
+
 def plot_bin_means(X,Y,bin_edges):
     """
     Plot the mean/std values of Y given bin_edges in X
@@ -144,40 +201,15 @@ def plot_bin_means(X,Y,bin_edges):
         stds[b] = y.std() / np.sqrt(len(y))
     plt.errorbar(bin_centers,means,stds)
 
-    
-def ismember(a, b):
-    '''
-    Works like MATLAB's ismember: checks each element of an array a is a member
-    of the second array b
-    
-    PARAMETERS:
-    ----------
-        a - array to be checked
-        b - array to be checked against
-        
-    RETURNS:
-    --------
-        I - logical array the same shape as a
-    '''
-    
-    bind = {}
-    for i, elt in enumerate(b):
-        if elt not in bind:
-            bind[elt] = i
-    return [bind.get(itm, False) for itm in a]  # None can be replaced by any other "not in b" value
-            
             
 def overlap(a, b):
     return min(a[1],b[1]) - max(a[0],b[0])
 
-<<<<<<< Updated upstream
 def nonans(x):
     return x[~np.isnan(x)]
              
-=======
 def jitter(x,sigma):
     N = len(x)
     noise = random.rand(N)
     return x + (noise - 0.5) * sigma
     
->>>>>>> Stashed changes
