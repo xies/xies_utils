@@ -125,6 +125,44 @@ def df_average(df, weights_column):
         values[col] = v
     return values
 
+def cvariation_ci(x,correction=True,alpha=0.05):
+    '''Calculate the confidence interval of CV estimate. Omits NaNs
+    
+    Input:
+        x: vector to calculate CV and CI on
+        correction: default true, whether to do standard correction (Vangel method)
+        alpha: test threshold (default = 0.05)
+            
+    Output:
+        cv, lci,uci - Confidence interval at significance threshold requested
+        
+    Source: https://itl.nist.gov/div898/software/dataplot/refman1/auxillar/coefvacl.htm
+            
+    '''
+    
+    import numpy as np
+    from scipy import stats
+    
+    # NaN-filter
+    x = nonans(x)
+    N = len(x)
+    
+    CV = np.std(x) / np.mean(x)
+
+    # Get chi-sq stats
+    u1 = stats.chi2.ppf(1-alpha/2,N-1)
+    u2 = stats.chi2.ppf(alpha/2,N-1)
+    # Corrected method
+    if correction:
+        LCI = CV / np.sqrt( ((u1+2)/N - 1)*CV**2 + u1 / (N-1) )
+        UCI = CV / np.sqrt( ((u2+2)/N - 1)*CV**2 + u2 / (N-1) )
+    else:
+        # Uncorrected CI
+        LCI = CV * np.sqrt((N-1)/u1)
+        UCI = CV * np.sqrt((N-1)/u2)
+
+    return [CV,LCI,UCI]
+    
 
 def smooth(x,window_len=11,window='hanning'):
     """smooth the data using a window with requested size.
