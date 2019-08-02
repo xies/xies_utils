@@ -221,9 +221,15 @@ def smooth(x,window_len=11,window='hanning'):
     y=np.convolve(w/w.sum(),s,mode='valid')
     return y
 
-def plot_bin_means(X,Y,bin_edges):
+def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
     """
     Plot the mean/std values of Y given bin_edges in X
+    
+    INPUT:
+        X, Y - the X and Y of the datat to bin over
+        bin_edges - edges of binning
+        error - 'sem' (default) for standard error of mean or 'std' for standard deviation
+        color - color to pass to errorbar
     
     """
     
@@ -236,10 +242,43 @@ def plot_bin_means(X,Y,bin_edges):
         y = Y[which_bin == b+1]
         bin_centers[b] = (bin_edges[b] + bin_edges[b+1]) / 2
         means[b] = y.mean()
-        stds[b] = y.std() / np.sqrt(len(y))
-    plt.errorbar(bin_centers,means,stds)
+        if error == 'sem':
+            stds[b] = y.std() / np.sqrt(len(y))
+        elif error == 'std':
+            stds[b] = y.std()
+    if style == 'errorbar':
+        plt.errorbar(bin_centers,means,stds,color=color)
+    elif style == 'fill':
+        plt.plot(bin_centers, means, color=color)
+        plt.fill_between(bin_centers, means-stds, means+stds,
+                         color=color,alpha=0.5)
 
-            
+def plot_slopegraph(X,Y,color='b',names=None):
+    """
+    Implements a Tufte's slopegraph for two paired lists
+    
+    Inputs:
+        X,Y paired
+        color - optional, default 'b'
+        names - [X_name,Y_name] (optional)
+    """
+    
+    assert(len(X) == len(Y)), 'X and Y must have same length'
+    assert( (np.ndim(X) == np.ndim(Y)) & np.ndim(X) == 1 ), 'X and Y must be 1-dimensional arrays'
+    
+    N = len(X)
+    for i in xrange(N):
+        # Skip if one of value is NaN
+        x = X[i]; y = Y[i]
+        if ~np.isnan(x) and ~np.isnan(y):
+            # Plot X, Y as scatter first
+            plt.scatter([1,2],[x,y],color=color)
+            # Plot slope
+            plt.plot([1,2],[x,y],color=color)
+            if names is not None:
+                plt.xticks([1,2],names)
+
+
 def overlap(a, b):
     return min(a[1],b[1]) - max(a[0],b[0])
 
