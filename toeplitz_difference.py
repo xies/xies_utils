@@ -31,7 +31,7 @@ def backward_difference(size):
 
 def central_difference(size):
  """ returns a toeplitz matrix
-   for central differences
+   for central differences (kernelsize = 1)
  """
  r = np.zeros(size)
  c = np.zeros(size)

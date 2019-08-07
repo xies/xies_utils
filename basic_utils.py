@@ -219,7 +219,10 @@ def smooth(x,window_len=11,window='hanning'):
         w=eval('np.'+window+'(window_len)')
 
     y=np.convolve(w/w.sum(),s,mode='valid')
+    if len(y) is not len(x):
+        y = y[window_len/2-1:-(window_len/2)]
     return y
+
 
 def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
     """
@@ -231,6 +234,8 @@ def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
         error - 'sem' (default) for standard error of mean or 'std' for standard deviation
         color - color to pass to errorbar
     
+    RETURN:
+        mean,std
     """
     
     which_bin = np.digitize(X,bin_edges)
@@ -252,6 +257,8 @@ def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
         plt.plot(bin_centers, means, color=color)
         plt.fill_between(bin_centers, means-stds, means+stds,
                          color=color,alpha=0.5)
+        
+    return means,stds
 
 def plot_slopegraph(X,Y,color='b',names=None):
     """
