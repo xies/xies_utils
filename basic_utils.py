@@ -296,4 +296,10 @@ def jitter(x,sigma):
     N = len(x)
     noise = random.rand(N)
     return x + (noise - 0.5) * sigma
-    
+
+
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
+

@@ -40,4 +40,47 @@ def subtract_nonmask_background(img,bg_mask,erosion_radius=5):
     img_sub = img_sub - bg
     img_sub[img_sub < 0] = 0
     return img_sub
+
+
     
+def detect_border_object(labels):
+    """
+    
+    Givenb a bwlabeled image, return the labels of the objects that touch the image border (1px wide)
+    Background object should be labeled 0
+    
+    """
+    border = np.zeros(labels.shape)
+    border[0,:] = 1
+    border[-1,:] = 1
+    border[:,0] = 1
+    border[:,-1] = 1
+    touch_border = np.unique(labels[border == 1])
+    
+    return touch_border[touch_border > 0] # Get rid of 'background object'
+    
+
+def subtract_cytoplasmic_ring(img,nuclear_mask,inner_r=3,outher_r=5):
+    from skimage import morphology
+    
+    """
+    Generate a 'ring' of background pixels around the nuclei in an image.
+    inner_r --
+    outer_r --
+    
+    """
+    
+    kernel = morphology.disk(inner_r)
+    inner_mask = morphology.dilation(nuclear_mask,kernel)
+    kernel = morphology.disk(outer_r)
+    outer_mask = morphology.dilation(nuclear_mask,kernel)
+    ring = np.logical_xor(outer_mask,inner_mask)
+    
+    bg = np.mean(img[ring])
+    img_sub = img.copy() - bg
+    img_sub[img_sub < 0] = 0
+    
+    return img_sub
+
+
+
