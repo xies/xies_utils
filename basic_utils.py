@@ -224,15 +224,17 @@ def smooth(x,window_len=11,window='hanning'):
     return y
 
 
-def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
+def plot_bin_means(X,Y,bin_edges,mean='median',error='sem',color=None,style='errorbar',minimum_n=25):
     """
     Plot the mean/std values of Y given bin_edges in X
     
     INPUT:
         X, Y - the X and Y of the datat to bin over
         bin_edges - edges of binning
+        mean - 'mean' or 'median'
         error - 'sem' (default) for standard error of mean or 'std' for standard deviation
         color - color to pass to errorbar
+        minimum_n - minimum # of points per bin (default = 10)
     
     RETURN:
         mean,std
@@ -246,11 +248,23 @@ def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
     for b in range(Nbins):
         y = Y[which_bin == b+1]
         bin_centers[b] = (bin_edges[b] + bin_edges[b+1]) / 2
-        means[b] = y.mean()
-        if error == 'sem':
-            stds[b] = y.std() / np.sqrt(len(y))
-        elif error == 'std':
-            stds[b] = y.std()
+        # Suppress noisy bins
+        if len(y) < minimum_n:
+            means[b] = np.nan
+            stds[b] = np.nan
+        else:
+            # Mean or median
+            if mean == 'mean':
+                means[b] = y.mean()
+            elif mean == 'median':
+                means[b] = y.median()
+    
+            if error == 'sem':
+                stds[b] = y.std() / np.sqrt(len(y))
+            elif error == 'std':
+                stds[b] = y.std()
+
+    # Plot
     if style == 'errorbar':
         plt.errorbar(bin_centers,means,stds,color=color)
     elif style == 'fill':
@@ -259,6 +273,7 @@ def plot_bin_means(X,Y,bin_edges,error='sem',color=None,style='errorbar'):
                          color=color,alpha=0.5)
         
     return means,stds
+
 
 def plot_slopegraph(X,Y,color='b',names=None):
     """

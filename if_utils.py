@@ -60,13 +60,14 @@ def detect_border_object(labels):
     return touch_border[touch_border > 0] # Get rid of 'background object'
     
 
-def subtract_cytoplasmic_ring(img,nuclear_mask,inner_r=3,outher_r=5):
+def subtract_cytoplasmic_ring(img,nuclear_mask,inner_r=3,outer_r=5):
     from skimage import morphology
+    import numpy as np
     
     """
     Generate a 'ring' of background pixels around the nuclei in an image.
-    inner_r --
-    outer_r --
+    inner_r -- inner ring radius, # of pixels dilated from mask (default = 3)
+    outer_r -- outer ring radius (default = 5)
     
     """
     
@@ -81,6 +82,5 @@ def subtract_cytoplasmic_ring(img,nuclear_mask,inner_r=3,outher_r=5):
     img_sub[img_sub < 0] = 0
     
     return img_sub
-
 
 
