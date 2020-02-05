@@ -318,3 +318,22 @@ def merge_two_dicts(x, y):
     z.update(y)    # modifies z with y's keys and values & returns None
     return z
 
+
+def find_last_n_nonnans(x,n):
+    '''
+    Return the last n non-NaN elements of the array x
+    '''
+    I = np.sort( np.where( ~np.isnan(x) ) )[0]
+    
+    return I[-1-n:-1]
+
+def find_nearest_idx(array,value):
+    '''
+    Find the index of the element in an array nearest to a given search value
+    '''
+    idx = np.searchsorted(array, value, side="left")
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
+        return idx-1
+    else:
+        return idx
+    
