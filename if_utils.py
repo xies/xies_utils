@@ -23,7 +23,7 @@ def gate_cells(df,x_name,y_name):
     return df[gateI]
     
 
-def subtract_nonmask_background(img,bg_mask,erosion_radius=5):
+def subtract_nonmask_background(img,bg_mask,erosion_radius=5,mean=np.mean):
     from skimage import morphology
     """
     
@@ -32,10 +32,10 @@ def subtract_nonmask_background(img,bg_mask,erosion_radius=5):
     intensity is defined as the mean of the leftover background pixels.
     
     """
-    
+    import numpy as np
     disk = morphology.selem.disk(erosion_radius) # for bg subtraction on RB channel
     bg_pixels = morphology.erosion(bg_mask,disk)
-    bg = img[bg_pixels].mean()
+    bg = np.median(img[bg_pixels])
     img_sub = img.copy()
     img_sub = img_sub - bg
     img_sub[img_sub < 0] = 0
@@ -59,7 +59,6 @@ def detect_border_object(labels):
     
     return touch_border[touch_border > 0] # Get rid of 'background object'
     
-
 def subtract_cytoplasmic_ring(img,nuclear_mask,inner_r=3,outer_r=5):
     from skimage import morphology
     import numpy as np
