@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy import random
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import math
 
 def plot_stack(im1,cmap1 = 'gray'):
 
@@ -98,7 +99,12 @@ def plot_stack_projections(image_stack,xy_scale,z_scale):
 #        plt.title(title)
 #    
 #    plt.show()
-    
+
+
+def standardize(x):
+    return x/np.nanmean(x)
+
+
 def df_average(df, weights_column):
     '''Computes the average on each columns of a dataframe, weighted
     by the values of the column `weight_columns`.
@@ -274,6 +280,48 @@ def plot_bin_means(X,Y,bin_edges,mean='median',error='sem',color=None,style='err
         
     return means,stds
 
+def get_bin_means(X,Y,bin_edges,mean='median',error='sem',minimum_n=25):
+    """
+    Get the mean/std values of Y given bin_edges in X
+    
+    INPUT:
+        X, Y - the X and Y of the datat to bin over
+        bin_edges - edges of binning
+        mean - 'mean' or 'median'
+        error - 'sem' (default) for standard error of mean or 'std' for standard deviation
+        color - color to pass to errorbar
+        minimum_n - minimum # of points per bin (default = 10)
+    
+    RETURN:
+        mean,std
+    """
+    
+    which_bin = np.digitize(X,bin_edges)
+    Nbins = len(bin_edges)-1
+    means = np.zeros(Nbins)
+    stds = np.zeros(Nbins)
+    bin_centers = np.zeros(Nbins)
+    for b in range(Nbins):
+        y = Y[which_bin == b+1]
+        bin_centers[b] = (bin_edges[b] + bin_edges[b+1]) / 2
+        # Suppress noisy bins
+        if len(y) < minimum_n:
+            means[b] = np.nan
+            stds[b] = np.nan
+        else:
+            # Mean or median
+            if mean == 'mean':
+                means[b] = np.nanmean(y)
+            elif mean == 'median':
+                means[b] = np.nanmedian(y)
+    
+            if error == 'sem':
+                stds[b] = y.std() / np.sqrt(len(y))
+            elif error == 'std':
+                stds[b] = y.std()
+        
+    return means,stds
+
 
 def plot_slopegraph(X,Y,color='b',names=None):
     """
@@ -289,7 +337,7 @@ def plot_slopegraph(X,Y,color='b',names=None):
     assert( (np.ndim(X) == np.ndim(Y)) & np.ndim(X) == 1 ), 'X and Y must be 1-dimensional arrays'
     
     N = len(X)
-    for i in xrange(N):
+    for i in range(N):
         # Skip if one of value is NaN
         x = X[i]; y = Y[i]
         if ~np.isnan(x) and ~np.isnan(y):
@@ -300,6 +348,13 @@ def plot_slopegraph(X,Y,color='b',names=None):
             if names is not None:
                 plt.xticks([1,2],names)
 
+
+def nan_polyfit(x,y,deg):
+    # Gets rid of nans and pass to numpy polyfit
+    I = ~np.isnan(x)
+    I = I & ~(np.isnan(y))
+    p,R = np.polyfit(x[I], y[I], deg)
+    return p,R
 
 def overlap(a, b):
     return min(a[1],b[1]) - max(a[0],b[0])

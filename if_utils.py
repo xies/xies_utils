@@ -6,12 +6,14 @@ Created on Sat May 25 18:10:51 2019
 @author: mimi
 """
 
+import numpy as np
 
 def gate_cells(df,x_name,y_name):
+    import numpy as np
     import matplotlib.path as mplPath
     import matplotlib.pyplot as plt
     from roipoly import RoiPoly
-    """
+    """∑
     Gate cells
     
     """
@@ -44,6 +46,7 @@ def subtract_nonmask_background(img,bg_mask,erosion_radius=5,mean=np.mean):
 
     
 def detect_border_object(labels):
+    import numpy as np
     """
     
     Givenb a bwlabeled image, return the labels of the objects that touch the image border (1px wide)
