@@ -361,7 +361,12 @@ def overlap(a, b):
 
 def nonans(x):
     return x[~np.isnan(x)]
-             
+
+def nonan_pairs(x,y):
+    I = ~np.isnan(x)
+    I = I & ~(np.isnan(y))
+    return x[I],y[I]
+
 def jitter(x,sigma):
     N = len(x)
     noise = random.rand(N)
