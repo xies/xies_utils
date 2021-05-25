@@ -102,7 +102,7 @@ def plot_stack_projections(image_stack,xy_scale,z_scale):
 
 
 def standardize(x):
-    return x/np.nanmean(x)
+    return (x / np.nanmean(x))
 
 
 def df_average(df, weights_column):
@@ -230,7 +230,7 @@ def smooth(x,window_len=11,window='hanning'):
     return y
 
 
-def plot_bin_means(X,Y,bin_edges,mean='median',error='sem',color=None,style='errorbar',minimum_n=25):
+def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,style='errorbar',minimum_n=25):
     """
     Plot the mean/std values of Y given bin_edges in X
     
@@ -245,6 +245,18 @@ def plot_bin_means(X,Y,bin_edges,mean='median',error='sem',color=None,style='err
     RETURN:
         mean,std
     """
+    
+    assert(X.shape == Y.shape)
+    
+    # Flatten if not vectors
+    if X.ndim > 1:
+        X = X.flatten()
+        Y = Y.flatten()
+    
+    if bin_edges == None:
+        X_min = np.nanmin(X)
+        X_max = np.nanmax(X)
+        bin_edges = np.linspace(X_min,X_max,num=10)
     
     which_bin = np.digitize(X,bin_edges)
     Nbins = len(bin_edges)-1
@@ -261,12 +273,13 @@ def plot_bin_means(X,Y,bin_edges,mean='median',error='sem',color=None,style='err
         else:
             # Mean or median
             if mean == 'mean':
-                means[b] = y.mean()
+                means[b] = np.nanmean()
             elif mean == 'median':
-                means[b] = y.median()
+                print(f'{y.shape}')
+                means[b] = np.nanmedian(y)
     
             if error == 'sem':
-                stds[b] = y.std() / np.sqrt(len(y))
+                stds[b] = np.nanstd(y) / np.sqrt(len(y))
             elif error == 'std':
                 stds[b] = y.std()
 
@@ -278,9 +291,9 @@ def plot_bin_means(X,Y,bin_edges,mean='median',error='sem',color=None,style='err
         plt.fill_between(bin_centers, means-stds, means+stds,
                          color=color,alpha=0.5)
         
-    return means,stds
+    return means
 
-def get_bin_means(X,Y,bin_edges,mean='median',error='sem',minimum_n=25):
+def get_bin_means(X,Y,bin_edges=None,mean='median',error='sem',minimum_n=25):
     """
     Get the mean/std values of Y given bin_edges in X
     
@@ -295,6 +308,19 @@ def get_bin_means(X,Y,bin_edges,mean='median',error='sem',minimum_n=25):
     RETURN:
         mean,std
     """
+    
+    assert(X.shape == Y.shape)
+    
+    # Flatten if not vectors
+    if X.ndim > 1:
+        X = X.flatten()
+        Y = Y.flatten()
+    
+    if (bin_edges == None).all():
+        X_min = np.nanmin(X)
+        X_max = np.nanmax(X)
+        bin_edges = np.linspace(X_min,X_max,num=10)
+    
     
     which_bin = np.digitize(X,bin_edges)
     Nbins = len(bin_edges)-1
@@ -316,11 +342,11 @@ def get_bin_means(X,Y,bin_edges,mean='median',error='sem',minimum_n=25):
                 means[b] = np.nanmedian(y)
     
             if error == 'sem':
-                stds[b] = y.std() / np.sqrt(len(y))
+                stds[b] = np.nanstd(y) / np.sqrt(len(y))
             elif error == 'std':
-                stds[b] = y.std()
+                stds[b] = np.nanstd(y)
         
-    return means,stds
+    return means
 
 
 def plot_slopegraph(X,Y,color='b',names=None):
