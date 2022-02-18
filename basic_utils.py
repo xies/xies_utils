@@ -253,10 +253,10 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,style
         X = X.flatten()
         Y = Y.flatten()
     
-    if bin_edges == None:
-        X_min = np.nanmin(X)
-        X_max = np.nanmax(X)
-        bin_edges = np.linspace(X_min,X_max,num=10)
+    # if bin_edges == None:
+    #     X_min = np.nanmin(X)
+    #     X_max = np.nanmax(X)
+    #     bin_edges = np.linspace(X_min,X_max,num=10)
     
     which_bin = np.digitize(X,bin_edges)
     Nbins = len(bin_edges)-1
