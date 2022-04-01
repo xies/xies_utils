@@ -14,7 +14,7 @@ from io import StringIO
 # Query UniProt for localization
 uniprot_urlbase = 'https://www.uniprot.org/uniprot/'
 
-        
+
 def query_uniprot_highest_hit(query_string):
     '''
     Web query of UniProt database. Returns the highest (first) hit.
@@ -28,13 +28,16 @@ def query_uniprot_highest_hit(query_string):
     entries = requests.get(uniprot_urlbase, query)
 
     recs = [rec for rec in SeqIO.parse(StringIO(entries.text),'fasta')]
-    rec = recs[0]
+    if len(recs) > 0:
+        rec = recs[0]
+        
+        upID = rec.id.split('|')[1]
     
-    upID = rec.id.split('|')[1]
-
-    # Parse XML using Biopython
-    handle = urlopen(uniprot_urlbase + upID + '.xml')
-
-    record = SeqIO.read(handle, "uniprot-xml")
+        # Parse XML using Biopython
+        handle = urlopen(uniprot_urlbase + upID + '.xml')
     
+        record = SeqIO.read(handle, "uniprot-xml")
+    else:
+        record = np.nan
+        
     return record
