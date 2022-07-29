@@ -11,9 +11,6 @@ import requests
 from Bio import SeqIO
 from io import StringIO
 
-# Query UniProt for localization
-uniprot_urlbase = 'https://www.uniprot.org/uniprot/'
-
 
 def query_uniprot_highest_hit(query_string):
     '''
@@ -24,20 +21,17 @@ def query_uniprot_highest_hit(query_string):
     OUTPUT: records
     
     '''
-    query = {"query": query_string ,'format':'fasta','sort':'score'}
-    entries = requests.get(uniprot_urlbase, query)
+    
+    rest_url = 'https://rest.uniprot.org/uniprotkb/search'
+    
+    query = {'query': query_string ,'format':'xml'}
+    entries = requests.get(rest_url, query)
 
-    recs = [rec for rec in SeqIO.parse(StringIO(entries.text),'fasta')]
-    if len(recs) > 0:
-        rec = recs[0]
-        
-        upID = rec.id.split('|')[1]
+    recs = [rec for rec in SeqIO.parse(StringIO(entries.text),'uniprot-xml')]
     
-        # Parse XML using Biopython
-        handle = urlopen(uniprot_urlbase + upID + '.xml')
-    
-        record = SeqIO.read(handle, "uniprot-xml")
-    else:
-        record = np.nan
-        
-    return record
+    return recs[0]
+
+
+query_string = 'ACT1 organism:human'
+foo = query_uniprot_highest_hit(query_string)
+
