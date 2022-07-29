@@ -45,7 +45,7 @@ def subtract_nonmask_background(img,bg_mask,erosion_radius=5,mean=np.mean):
 
 
     
-def detect_border_object(labels):
+def delete_border_objects(labels):
     import numpy as np
     """
     
@@ -53,14 +53,28 @@ def detect_border_object(labels):
     Background object should be labeled 0
     
     """
-    border = np.zeros(labels.shape)
-    border[0,:] = 1
-    border[-1,:] = 1
-    border[:,0] = 1
-    border[:,-1] = 1
-    touch_border = np.unique(labels[border == 1])
+    if labels.ndim == 2:
+        border = np.zeros(labels.shape)
+        border[0,:] = 1
+        border[-1,:] = 1
+        border[:,0] = 1
+        border[:,-1] = 1
+        touch_border = np.unique(labels[border == 1])
+    elif labels.ndim == 3:
+        border = np.zeros(labels.shape)
+        border[0,:,:] = 1
+        border[-1,:,:] = 1
+        border[:,0,:] = 1
+        border[:,-1,:] = 1
+        border[:,:,1] = 1
+        border[:,:,1] = 1
+        touch_border = np.unique(labels[border == 1])
     
-    return touch_border[touch_border > 0] # Get rid of 'background object'
+    touch_border[touch_border > 0]
+    for touching in touch_border:
+        labels[labels == touching] = 0
+    
+    return labels # Get rid of 'background object'
     
 def subtract_cytoplasmic_ring(img,nuclear_mask,inner_r=3,outer_r=5):
     from skimage import morphology
