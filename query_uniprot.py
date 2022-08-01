@@ -6,13 +6,14 @@ Created on Wed Mar  2 16:47:49 2022
 @author: xies
 """
 
+import numpy as np
 from urllib.request import urlopen
 import requests
 from Bio import SeqIO
 from io import StringIO
 
-
 def query_uniprot_highest_hit(query_string):
+    
     '''
     Web query of UniProt database. Returns the highest (first) hit.
     
@@ -26,12 +27,16 @@ def query_uniprot_highest_hit(query_string):
     
     query = {'query': query_string ,'format':'xml'}
     entries = requests.get(rest_url, query)
-
-    recs = [rec for rec in SeqIO.parse(StringIO(entries.text),'uniprot-xml')]
     
-    return recs[0]
+    recs = [rec for rec in SeqIO.parse(StringIO(entries.text),'uniprot-xml')]
+    if len(recs) > 0:
+        record = recs[0]
+    else:
+        record = np.nan
+    
+    return record
 
 
-query_string = 'ACT1 organism:human'
+query_string = 'ACTB human'
 foo = query_uniprot_highest_hit(query_string)
 
