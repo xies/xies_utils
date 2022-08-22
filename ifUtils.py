@@ -8,6 +8,11 @@ Created on Sat May 25 18:10:51 2019
 
 import numpy as np
 
+def min_normalize_image(im):
+    im = im - im.min()
+    
+    return im
+
 def gate_cells(df,x_name,y_name):
     import numpy as np
     import matplotlib.path as mplPath
