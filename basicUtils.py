@@ -12,6 +12,14 @@ from numpy import random
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
 
+
+def euclidean_distance(X,Y):
+    X = np.array(X,dtype=float)
+    Y = np.array(Y,dtype=float)
+    assert(X.ndim == Y.ndim)
+    return np.sqrt( np.sum((X-Y)**2) )
+
+
 def plot_stack(im1,cmap1 = 'gray'):
 
     Z = im1.shape[0]
@@ -131,44 +139,6 @@ def df_average(df, weights_column):
         values[col] = v
     return values
 
-def cvariation_ci(x,correction=True,alpha=0.05):
-    '''Calculate the confidence interval of CV estimate. Omits NaNs
-    
-    Input:
-        x: vector to calculate CV and CI on
-        correction: default true, whether to do standard correction (Vangel method)
-        alpha: test threshold (default = 0.05)
-            
-    Output:
-        cv, lci,uci - Confidence interval at significance threshold requested
-        
-    Source: https://itl.nist.gov/div898/software/dataplot/refman1/auxillar/coefvacl.htm
-            
-    '''
-    
-    import numpy as np
-    from scipy import stats
-    
-    # NaN-filter
-    x = nonans(x)
-    N = len(x)
-    
-    CV = np.std(x) / np.mean(x)
-
-    # Get chi-sq stats
-    u1 = stats.chi2.ppf(1-alpha/2,N-1)
-    u2 = stats.chi2.ppf(alpha/2,N-1)
-    # Corrected method
-    if correction:
-        LCI = CV / np.sqrt( ((u1+2)/N - 1)*CV**2 + u1 / (N-1) )
-        UCI = CV / np.sqrt( ((u2+2)/N - 1)*CV**2 + u2 / (N-1) )
-    else:
-        # Uncorrected CI
-        LCI = CV * np.sqrt((N-1)/u1)
-        UCI = CV * np.sqrt((N-1)/u2)
-
-    return [CV,LCI,UCI]
-    
 
 def smooth(x,window_len=11,window='hanning'):
     """smooth the data using a window with requested size.
@@ -212,7 +182,6 @@ def smooth(x,window_len=11,window='hanning'):
     if window_len<3:
         return x
 
-
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise (ValueError,"Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
@@ -228,7 +197,6 @@ def smooth(x,window_len=11,window='hanning'):
     if len(y) is not len(x):
         y = y[window_len/2-1:-(window_len/2)]
     return y
-
 
 def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
                    style='errorbar',minimum_n=25,bin_style='equal'):
@@ -256,7 +224,7 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
         X = X.flatten()
         Y = Y.flatten()
     
-    if bin_edges == None:
+    if len(bin_edges) == 0:
         X_min = X.min()
         X_max = X.max()
         bin_edges = np.linspace(X_min,X_max,num=5)
@@ -392,6 +360,10 @@ def plot_slopegraph(X,Y,color='b',names=None):
             if names is not None:
                 plt.xticks([1,2],names)
 
+def standardize_df(df,excepting=None):
+    fields = df.columns
+    df_new = df.copy()
+    
 
 def nan_polyfit(x,y,deg):
     # Gets rid of nans and pass to numpy polyfit

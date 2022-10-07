@@ -5,6 +5,7 @@ Created on Sat Jun 29 18:09:10 2019
 
 @author: xies
 """
+import numpy as np
 from scipy.linalg import toeplitz
 
 def forward_difference(size):
