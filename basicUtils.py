@@ -224,10 +224,6 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
         X = X.flatten()
         Y = Y.flatten()
     
-    if len(bin_edges) == 0:
-        X_min = X.min()
-        X_max = X.max()
-        bin_edges = np.linspace(X_min,X_max,num=5)
     if type(bin_edges) == int:
         if bin_style == 'equal':
             X_min = X.min()

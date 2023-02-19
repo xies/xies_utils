@@ -8,7 +8,7 @@ Created on Wed Aug 31 12:30:54 2022
 
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
-from skimage import draw
+from skimage import draw, filters
 
 def draw_labels_on_image(coords,labels,im_shape,font_size=10,fill='white'):
     
@@ -96,3 +96,17 @@ def colorize_segmentation(seg,value_dict,dtype=int):
         colorized[seg == k] = v
     return colorized
     
+def gaussian_blur_3d(image,sigma_xy=1,sigma_z=1):
+    
+    im_blur = np.zeros_like(image)
+    Z,Y,X = image.shape
+    
+    for z,im in enumerate(image):
+        im_blur[z,...] = filters.gaussian(im, sigma=sigma_xy)
+    
+    for x in range(X):
+        for y in range(Y):
+            im_blur[:,y,x] = filters.gaussian(image[:,y,z], sigma=sigma_z)
+    
+    return im_blur
+

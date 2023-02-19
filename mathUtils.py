@@ -8,7 +8,7 @@ Created on Tue Sep  6 20:22:07 2022
 
 import numpy as np
 from scipy import stats, linalg
-from skimage import morphology
+from skimage import morphology, filters
 
 def surface_area(im):
     assert(im.ndim == 3)
@@ -132,7 +132,6 @@ def polygon_area(X,Y):
     area = .5*np.absolute(S1 - S2)
     
     return area
-
 
 ########################################################################################
 # Author: Ujash Joshi, University of Toronto, 2017                                     #
