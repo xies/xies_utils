@@ -98,6 +98,10 @@ def colorize_segmentation(seg,value_dict,dtype=int):
     
 def gaussian_blur_3d(image,sigma_xy=1,sigma_z=1):
     
+    assert(image.ndim == 3)
+    from skimage.util import img_as_float
+    image = img_as_float(image)
+    
     im_blur = np.zeros_like(image)
     Z,Y,X = image.shape
     
@@ -106,7 +110,7 @@ def gaussian_blur_3d(image,sigma_xy=1,sigma_z=1):
     
     for x in range(X):
         for y in range(Y):
-            im_blur[:,y,x] = filters.gaussian(image[:,y,z], sigma=sigma_z)
+            im_blur[:,y,x] = filters.gaussian(image[:,y,x], sigma=sigma_z)
     
     return im_blur
 

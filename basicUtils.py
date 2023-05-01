@@ -11,6 +11,9 @@ import numpy as np
 from numpy import random
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
+from SelectFromCollection import SelectFromCollection
+from matplotlib.path import Path
+
 
 
 def euclidean_distance(X,Y):
@@ -409,3 +412,27 @@ def find_nearest_idx(array,value):
     else:
         return idx
     
+
+def draw_gate(df,x,y,xlims=None,ylims=None,alpha=0.1):
+    
+    
+    plt.figure()
+    pts = plt.scatter(df[x],df[y],alpha=alpha)
+
+    if xlims:
+        plt.xlim(xlims)
+    if ylims:
+        plt.ylim(ylims)
+
+    selector = SelectFromCollection(plt.gca(), pts)
+    return selector
+
+def gate_on_selector(selector,df,xname,yname):
+    verts = np.array(selector.poly.verts)
+    x = verts[:,0]
+    y = verts[:,1]
+    
+    p_ = Path(np.array([x,y]).T)
+    I = np.array([p_.contains_point([x,y]) for x,y in zip(df[xname],df[yname])])
+
+    return I
