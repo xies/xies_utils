@@ -13,8 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
 from SelectFromCollection import SelectFromCollection
 from matplotlib.path import Path
-
-
+from scipy.stats import stats
 
 def euclidean_distance(X,Y):
     X = np.array(X,dtype=float)
@@ -436,3 +435,21 @@ def gate_on_selector(selector,df,xname,yname):
     I = np.array([p_.contains_point([x,y]) for x,y in zip(df[xname],df[yname])])
 
     return I
+
+def ttest_from_groupby(df,field2group,field2test):
+    
+    grouped = list(df.groupby(field2group))
+    assert(len(grouped) == 2)
+    
+    X = grouped[0][1]
+    Y = grouped[1][1]
+    
+    X = X[field2test].dropna()
+    Y = Y[field2test].dropna()
+    
+    T,P = stats.ttest_ind(X,Y)
+    
+    return T,P
+    
+
+
