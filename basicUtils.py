@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
 from SelectFromCollection import SelectFromCollection
 from matplotlib.path import Path
-from scipy.stats import stats
+from scipy import stats
 
 def euclidean_distance(X,Y):
     X = np.array(X,dtype=float)
@@ -450,6 +450,59 @@ def ttest_from_groupby(df,field2group,field2test):
     T,P = stats.ttest_ind(X,Y)
     
     return T,P
+
+
+def kstest_from_groupby(df,field2group,field2test):
     
+    grouped = list(df.groupby(field2group))
+    assert(len(grouped) == 2)
+    
+    X = grouped[0][1]
+    Y = grouped[1][1]
+    
+    X = X[field2test].dropna()
+    Y = Y[field2test].dropna()
+    
+    T,P = stats.kstest(X,Y)
+    
+    return T,P
+
+def plot_from_groupby(df,field2group,field2plot,plotfunc):
+    grouped = list(df.groupby(field2group))
+    
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    legends = []
+    for i,(name,df_) in enumerate(grouped):
+        X = df_[field2plot]
+        plotfunc(X, color=colors[i])
+        legends.append(name)
+
+    plt.legend(legends)
+    return
+    
+
+def normplot(x,**kwargs):
+    
+    x = nonans(x)
+    (qtile_counts,qtile_bins), (slope, intercept, r) = stats.probplot(x,dist='norm')
+    plt.scatter(qtile_bins,qtile_counts, **kwargs)
+    
+    plt.plot(qtile_counts * slope + intercept, qtile_counts,'k--',label='_nolegend_') # no legend
+    
+    # ticks
+    ticks_perc=[1, 5, 10, 20, 50, 80, 90, 95, 99]
+    ticks_quan=[stats.norm.ppf(i/100.) for i in ticks_perc]
+
+    #assign new ticks
+    plt.yticks(ticks_quan,ticks_perc)
+    plt.xlabel('Values')
+    plt.ylabel('Quantiles')
+    
+    plt.grid()
+    plt.show()
+    
+    
+    return
+
 
 
