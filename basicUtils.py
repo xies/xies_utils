@@ -114,6 +114,8 @@ def plot_stack_projections(image_stack,xy_scale,z_scale):
 def standardize(x):
     return (x / np.nanmean(x))
 
+def z_standardize(x):
+    return (x - np.nanmean(x))/np.nanstd(x)
 
 def df_average(df, weights_column):
     '''Computes the average on each columns of a dataframe, weighted
