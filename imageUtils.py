@@ -75,7 +75,7 @@ def draw_adjmat_on_image_3d(A,vert_coords,im_shape):
     return im
 
 
-def most_likely_label(labeled,im):
+def most_likely_label(labeled,im,pixel_threshold=100):
     '''
     For use as an property function to give to skimage.measure.regionprops
     
@@ -83,11 +83,12 @@ def most_likely_label(labeled,im):
     
     
     '''
-    
     label = 0
     if len(im[im>0]) > 0:
         unique,counts = np.unique(im[im > 0],return_counts=True)
         label = unique[counts.argmax()]
+        if counts.max() < pixel_threshold:
+            label = np.nan
         if label == 0:
             label = np.nan
     return label
