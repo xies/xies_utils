@@ -76,6 +76,14 @@ def draw_adjmat_on_image_3d(A,vert_coords,im_shape):
 
 
 def most_likely_label(labeled,im):
+    '''
+    For use as an property function to give to skimage.measure.regionprops
+    
+    Given a mask image, return the intensity value within that image that the highest occurence
+    
+    
+    '''
+    
     label = 0
     if len(im[im>0]) > 0:
         unique,counts = np.unique(im[im > 0],return_counts=True)
