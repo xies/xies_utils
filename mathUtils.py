@@ -9,6 +9,22 @@ Created on Tue Sep  6 20:22:07 2022
 import numpy as np
 from scipy import stats, linalg
 from skimage import morphology, filters
+from basicUtils import nonans
+
+def total_std(means,stds,num_per_sample):
+    assert(len(stds) == len(means))
+    assert(len(stds) == len(num_per_sample))
+    
+    means = np.array(means)
+    stds = np.array(stds)
+    num_per_sample = np.array(num_per_sample)
+    
+    total_mean = (num_per_sample * means).sum() / num_per_sample.sum()
+    D = means - total_mean
+    
+    total_std = ((num_per_sample * stds**2).sum() + (num_per_sample*D**2).sum()) / num_per_sample.sum()
+    return np.sqrt(total_std)
+
 
 def surface_area(im):
     assert(im.ndim == 3)
