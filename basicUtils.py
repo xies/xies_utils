@@ -236,9 +236,9 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
         elif bin_style == 'percentile':
             bin_edges = np.percentile(nonans(X),np.linspace(0,100,num=bin_edges))
             print(bin_edges)
-        else:
-            raise ValueError
-    
+    else:
+        raise ValueError
+    print(X)
     which_bin = np.digitize(X,bin_edges)
     Nbins = len(bin_edges)-1
     means = np.zeros(Nbins)

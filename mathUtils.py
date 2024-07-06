@@ -204,3 +204,13 @@ def normxcorr2(template, image, mode="full"):
 
     return np.abs(out)
 
+def estimate_log_normal_parameters(sample_mean,sample_sigma):
+    
+    mu = np.log(sample_mean**2/np.sqrt(sample_mean**2+sample_sigma**2))
+    sigma = np.sqrt(np.log(1+sample_sigma**2/sample_mean**2))
+    
+    return mu,sigma
+    
+    
+    
+    
