@@ -17,14 +17,14 @@ from scipy import stats
 def total_std(means,stds,num_per_sample):
     assert(len(stds) == len(means))
     assert(len(stds) == len(num_per_sample))
-    
+
     means = np.array(means)
     stds = np.array(stds)
     num_per_sample = np.array(num_per_sample)
-    
+
     total_mean = (num_per_sample * means).sum() / num_per_sample.sum()
     D = means - total_mean
-    
+
     total_std = ((num_per_sample * stds**2).sum() + (num_per_sample*D**2).sum()) / num_per_sample.sum()
     return np.sqrt(total_std)
 
@@ -43,29 +43,29 @@ def parse_3D_inertial_tensor(I):
     assert(I.shape == (3,3))
     L,D = linalg.eig(I)
     L = np.real(L) # Assume no complex solution is necessary
-    
+
     #Sort eigvec by eigenvalue magnitudes
     order = np.flip( np.argsort(L) )
     L = L[order]
     D = D[:,order]
-    
+
     Znorm = np.array([1,0,0]).T
     dots = np.array([ np.dot(d,Znorm) for d in D.T ])
-    
+
     phis = np.rad2deg( np.arccos(np.abs(dots)) )
-    
+
     # # Znorm = np.zeros((3,3))
     # # Znorm[0,:] = 1
-    
+
     # # norms = np.sqrt( (delta**2).sum(axis=0) )
-    
+
     # # Flip Znorm if everything is too large
     # if np.all(norms > 1):
     #     delta = D + Znorm
     #     norms = np.sqrt( (delta**2).sum(axis=0) )
-    
+
     axis_order = np.argsort( phis )
-    
+
     phi = phis[axis_order[0]]
     axial_moment = L[axis_order[0]]
     other_moments = L[axis_order[1:]]
@@ -73,30 +73,30 @@ def parse_3D_inertial_tensor(I):
     theta = np.arccos(Z_proj_planar_major[1] / linalg.norm(Z_proj_planar_major))
     if theta < 0:
         theta = theta + 180
-    
+
     theta = np.rad2deg(theta)
-    
+
     return axial_moment, phi, other_moments[0], other_moments[1], theta
 
 def cvariation_ci(x,correction=True,alpha=0.05):
     '''Calculate the confidence interval of CV estimate. Omits NaNs
-    
+
     Input:
         x: vector to calculate CV and CI on
         correction: default true, whether to do standard correction (Vangel method)
         alpha: test threshold (default = 0.05)
-            
+
     Output:
         cv, lci,uci - Confidence interval at significance threshold requested
-        
+
     Source: https://itl.nist.gov/div898/software/dataplot/refman1/auxillar/coefvacl.htm
-            
+
     '''
-    
+
     # NaN-filter
     x = nonans(x)
     N = len(x)
-    
+
     CV = np.std(x) / np.mean(x)
 
     # Get chi-sq stats
@@ -150,19 +150,19 @@ def get_neighbor_distances(tri,idx,coords):
 def argsort_counter_clockwise(X,Y):
     cx = X.mean()
     cy = Y.mean()
-    
+
     dX = X - cx
     dY = Y - cy
-    
+
     thetas = np.arctan2(dX,dY)
     return np.argsort(thetas)
 
 def polygon_area(X,Y):
-        
+
     S1 = np.sum(X*np.roll(Y,-1))
     S2 = np.sum(Y*np.roll(X,-1))
     area = .5*np.absolute(S1 - S2)
-    
+
     return area
 
 ########################################################################################
@@ -186,7 +186,7 @@ def normxcorr2(template, image, mode="full"):
     Length of each dimension must be less than length of image.
     :param image: N-D array
     :param mode: Options, "full", "valid", "same"
-    full (Default): The output of fftconvolve is the full discrete linear convolution of the inputs. 
+    full (Default): The output of fftconvolve is the full discrete linear convolution of the inputs.
     Output size will be image size + 1/2 template size in each dimension.
     valid: The output consists only of those elements that do not rely on the zero-padding.
     same: The output is the same size as image, centered with respect to the ‘full’ output.
@@ -224,7 +224,7 @@ def estimate_log_normal_parameters(sample_mu,sample_sigma):
     '''
     Convert a sample mean and std from a log-normal distr. and convert to the underlying
     normal distr mu and sigma
-    
+
     Parameters
     ----------
     sample_mu : TYPE
@@ -235,11 +235,10 @@ def estimate_log_normal_parameters(sample_mu,sample_sigma):
     Returns
     -------
     mu, sigma of 'not-log' normal distribution
-    
+
     See: https://en.wikipedia.org/wiki/Log-normal_distribution
 
     '''
     mu = np.log(sample_mu**2 / np.sqrt(sample_mu**2+sample_sigma**2))
-    sigma = np.sqrt( np.log(1+sample_sigma**2/sample_mu**2) )        
+    sigma = np.sqrt( np.log(1+sample_sigma**2/sample_mu**2) )
     return mu,sigma
-    
