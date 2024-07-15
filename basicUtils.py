@@ -332,7 +332,7 @@ def get_bin_means(X,Y,bin_edges=None,mean='median',error='sem',minimum_n=25):
             elif error == 'std':
                 stds[b] = np.nanstd(y)
         
-    return means
+    return means,bin_centers
 
 
 def plot_slopegraph(X,Y,color='b',names=None):

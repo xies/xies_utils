@@ -10,6 +10,9 @@ import numpy as np
 from scipy import stats, linalg
 from skimage import morphology, filters
 from basicUtils import nonans
+from numpy import random
+from scipy import stats
+
 
 def total_std(means,stds,num_per_sample):
     assert(len(stds) == len(means))
@@ -108,7 +111,20 @@ def cvariation_ci(x,correction=True,alpha=0.05):
         LCI = CV * np.sqrt((N-1)/u1)
         UCI = CV * np.sqrt((N-1)/u2)
 
-    return [CV,LCI,UCI]
+    return [LCI,UCI]
+
+
+def cvariation_ci_bootstrap(x,Nboot,alpha=0.05):
+    '''
+    Calculates the confidence intervals of the CV of a sample using bootstrapping.
+    Ignores NaNs
+    '''
+    x = nonans(x)
+    _CV = [stats.variation(x.iloc[random.randint(low=0,high=len(x),size=Nboot)]) for i in range(Nboot)]
+    _CV = np.array(_CV)
+    lb,ub = stats.mstats.mquantiles(_CV,prob = [alpha,1-alpha])
+    return [lb,ub]
+
 
 # Construct triangulation
 def adjmat2triangle(G):
@@ -204,3 +220,26 @@ def normxcorr2(template, image, mode="full"):
 
     return np.abs(out)
 
+def estimate_log_normal_parameters(sample_mu,sample_sigma):
+    '''
+    Convert a sample mean and std from a log-normal distr. and convert to the underlying
+    normal distr mu and sigma
+    
+    Parameters
+    ----------
+    sample_mu : TYPE
+        DESCRIPTION.
+    sample_sigma : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    mu, sigma of 'not-log' normal distribution
+    
+    See: https://en.wikipedia.org/wiki/Log-normal_distribution
+
+    '''
+    mu = np.log(sample_mu**2 / np.sqrt(sample_mu**2+sample_sigma**2))
+    sigma = np.sqrt( np.log(1+sample_sigma**2/sample_mu**2) )        
+    return mu,sigma
+    
