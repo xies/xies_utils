@@ -114,16 +114,16 @@ def cvariation_ci(x,correction=True,alpha=0.05):
     return [LCI,UCI]
 
 
-def cvariation_ci_bootstrap(x,Nboot,alpha=0.05):
+def cvariation_bootstrap(x,Nboot,alpha=0.05):
     '''
     Calculates the confidence intervals of the CV of a sample using bootstrapping.
     Ignores NaNs
     '''
-    x = nonans(x)
-    _CV = [stats.variation(x.iloc[random.randint(low=0,high=len(x),size=Nboot)]) for i in range(Nboot)]
+    x = x.flatten()
+    _CV = [stats.variation(x[random.randint(low=0,high=len(x),size=Nboot)]) for i in range(Nboot)]
     _CV = np.array(_CV)
     lb,ub = stats.mstats.mquantiles(_CV,prob = [alpha,1-alpha])
-    return [lb,ub]
+    return [np.nanmean(_CV),lb,ub]
 
 
 # Construct triangulation
