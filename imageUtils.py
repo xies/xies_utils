@@ -10,6 +10,29 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 from skimage import draw, filters
 
+
+def fill_in_cube(img,coordinates,label,size=5):
+    '''
+    Takes in a 3D image and 'fill' a cube with given size at the given
+    coordinate and given label
+    '''
+    assert(img.ndim == 3)
+    assert(img.ndim == len(coordinates))
+
+    [z,y,x] = coordinates
+    ZZ,YY,XX = img.shape
+    lower_x = max(x - size,0)
+    lower_y = max(y - size,0)
+    lower_z = max(z - size//2,0)
+    higher_x = min(x + size,XX)
+    higher_y = min(y + size,YY)
+    higher_z = min(z + size//2,ZZ)
+    img[lower_z:higher_z,lower_y:higher_y,lower_x:higher_x] = label
+
+    return img
+    
+
+
 def draw_labels_on_image(coords,labels,im_shape,font_size=10,fill='white'):
     
     if fill == 'random':

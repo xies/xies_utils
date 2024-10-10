@@ -15,6 +15,7 @@ from SelectFromCollection import SelectFromCollection
 from matplotlib.path import Path
 from scipy import stats
 
+
 def euclidean_distance(X,Y):
     X = np.array(X,dtype=float)
     Y = np.array(Y,dtype=float)

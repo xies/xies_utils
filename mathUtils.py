@@ -8,10 +8,37 @@ Created on Tue Sep  6 20:22:07 2022
 
 import numpy as np
 from scipy import stats, linalg
-from skimage import morphology, filters
+from skimage import morphology
 from basicUtils import nonans
 from numpy import random
-from scipy import stats
+# from scipy import stats
+import pandas as pd
+from scipy.interpolate import UnivariateSpline
+
+
+def get_interpolated_curve(cf,y_field='Volume',x_field='Age',smoothing_factor=1e10):
+
+    # Get rid of daughter cells]
+    if len(cf) < 4:
+        yhat = cf[y_field].values
+        dydt = np.ones(len(cf)) * np.nan
+        
+    else:
+        t = cf[x_field].values
+        v = cf[y_field].values
+        # Spline smooth
+        spl = UnivariateSpline(t, v, k=3, s=smoothing_factor)
+        yhat = spl(t)
+        
+        dydt = spl.derivative(n=1)(t)
+        
+        # # Nuclear volume
+        # nv = cf.Nucleus.values
+        # # Spline smooth
+        # spl = UnivariateSpline(t, nv, k=3, s=smoothing_factor)
+        # nuc_hat = spl(t)
+
+    return yhat,dydt
 
 
 def total_std(means,stds,num_per_sample):
@@ -114,17 +141,31 @@ def cvariation_ci(x,correction=True,alpha=0.05):
     return [LCI,UCI]
 
 
-def cvariation_bootstrap(x,Nboot,alpha=0.05):
+def cvariation_bootstrap(x,Nboot,alpha=0.05,subsample=None):
     '''
     Calculates the confidence intervals of the CV of a sample using bootstrapping.
     Ignores NaNs
     '''
-    x = x.flatten()
-    _CV = [stats.variation(x[random.randint(low=0,high=len(x),size=Nboot)]) for i in range(Nboot)]
+    if subsample is None:
+        subsample = len(x)
+    _CV = [stats.variation(x[random.randint(low=0,high=len(x),size=subsample)]) for i in range(Nboot)]
     _CV = np.array(_CV)
     lb,ub = stats.mstats.mquantiles(_CV,prob = [alpha,1-alpha])
     return [np.nanmean(_CV),lb,ub]
 
+def cv_difference_pvalue(x,y,Nboot, subsample=None):
+    if subsample is None:
+        subsample = min(len(x),len(y))
+    if isinstance(x,pd.Series):
+        x = x.values
+    if isinstance(y,pd.Series):
+        y = y.values
+    
+    _CVx = np.array([stats.variation(x[random.randint(low=0,high=len(x),size=subsample)]) for i in range(Nboot)])
+    _CVy = np.array([stats.variation(y[random.randint(low=0,high=len(y),size=subsample)]) for i in range(Nboot)])
+    print(_CVx)
+    P = (_CVx < _CVy).sum() / Nboot
+    return P
 
 # Construct triangulation
 def adjmat2triangle(G):
