@@ -7,28 +7,47 @@ Created on Sat May 25 18:10:51 2019
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
+from SelectFromCollection import SelectFromCollection
+
+class Gate:
+    def __init__(self,name,xfield,yfield):
+        self.name = name
+        self.xfield = xfield
+        self.yfield = yfield
+        self.selector: None
+        self.path = None
+
+    def draw_gates(self,df,alpha=0.01):
+        xgate = self.xfield
+        ygate = self.yfield
+        plt.figure()
+        pts = plt.scatter(df[xgate],df[ygate], alpha=alpha)
+        plt.xlabel(xgate)
+        plt.ylabel(ygate)
+        self.selector = SelectFromCollection(plt.gca(), pts)
+        
+    def get_gated_indices(self,df):
+        verts = np.array(self.selector.poly.verts)
+        x = verts[:,0];y = verts[:,1]
+        p_ = Path(np.array([x,y]).T)
+        self.path = p_
+        I = np.array([p_.contains_point([x,y]) for x,y in zip(df[self.xfield],df[self.yfield])])
+        return I
+
+    def draw_gate_as_patch(self,df,alpha=0.01):
+        plt.figure()
+        plt.scatter(df[self.xfield],df[self.yfield],alpha=alpha)
+        plt.xlabel(self.xfield);plt.ylabel(self.yfield);
+        patch = PathPatch(self.path,lw=2,facecolor='r',alpha=0.2)
+        plt.gca().add_patch(patch)
 
 def min_normalize_image(im):
     im = im - im.min()
     
-    return im
-
-def gate_cells(df,x_name,y_name):
-    import numpy as np
-    import matplotlib.path as mplPath
-    import matplotlib.pyplot as plt
-    from roipoly import RoiPoly
-    """∑
-    Gate cells
-    
-    """
-    plt.figure()
-    sb.scatterplot(data = df, x=x_name, y=y_name)
-    gate = RoiPoly(color='r') # Draw polygon gate
-    gate_p = mplPath.Path( np.vstack((gate.x, gate.y)).T )
-    gateI = gate_p.contains_points( np.vstack((df[x_name],df[y_name])).T )
-    return df[gateI]
-    
+    return im    
 
 def subtract_nonmask_background(img,bg_mask,erosion_radius=5,mean=np.mean):
     from skimage import morphology

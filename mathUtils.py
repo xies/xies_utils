@@ -148,6 +148,8 @@ def cvariation_bootstrap(x,Nboot,alpha=0.05,subsample=None):
     '''
     if subsample is None:
         subsample = len(x)
+    if isinstance(x,pd.core.series.Series):
+        x = x.values
     _CV = [stats.variation(x[random.randint(low=0,high=len(x),size=subsample)]) for i in range(Nboot)]
     _CV = np.array(_CV)
     lb,ub = stats.mstats.mquantiles(_CV,prob = [alpha,1-alpha])
