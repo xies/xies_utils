@@ -146,6 +146,7 @@ def cvariation_bootstrap(x,Nboot,alpha=0.05,subsample=None):
     Calculates the confidence intervals of the CV of a sample using bootstrapping.
     Ignores NaNs
     '''
+    x = nonans(x)
     if subsample is None:
         subsample = len(x)
     if isinstance(x,pd.core.series.Series):
