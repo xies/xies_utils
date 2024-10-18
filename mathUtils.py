@@ -166,7 +166,7 @@ def cv_difference_pvalue(x,y,Nboot, subsample=None):
     
     _CVx = np.array([stats.variation(x[random.randint(low=0,high=len(x),size=subsample)]) for i in range(Nboot)])
     _CVy = np.array([stats.variation(y[random.randint(low=0,high=len(y),size=subsample)]) for i in range(Nboot)])
-    print(_CVx)
+    
     P = (_CVx < _CVy).sum() / Nboot
     return P
 
