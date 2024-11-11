@@ -311,6 +311,10 @@ def get_bin_means(X,Y,bin_edges=None,mean='median',error='sem',minimum_n=25):
     
     which_bin = np.digitize(X,bin_edges)
     Nbins = len(bin_edges)-1
+    # Calculate x-errors
+    xmeans = np.array([X[ which_bin == i ].mean() for i in range(which_bin.max())])
+    xerrors = np.array([X[ which_bin == i ].std() for i in range(which_bin.max())])
+    
     means = np.zeros(Nbins)
     stds = np.zeros(Nbins)
     bin_centers = np.zeros(Nbins)
@@ -333,7 +337,7 @@ def get_bin_means(X,Y,bin_edges=None,mean='median',error='sem',minimum_n=25):
             elif error == 'std':
                 stds[b] = np.nanstd(y)
         
-    return means,bin_centers
+    return means,stds,xmeans,xerrors
 
 
 def plot_slopegraph(X,Y,color='b',names=None):
