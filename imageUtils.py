@@ -8,7 +8,78 @@ Created on Wed Aug 31 12:30:54 2022
 
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
-from skimage import draw, filters
+from skimage import draw, filters, morphology, exposure, measure
+
+from scipy import sparse, ndimage
+import pandas as pd
+from typing import Iterable
+
+def filter_seg_by_largest_object(mask):
+    labels = measure.label(mask)
+    df = pd.DataFrame(measure.regionprops_table(labels, properties=['label','area']))
+    df = df.sort_values(by='area',ascending=False)
+    largest_object = df.iloc[0]['label']
+    return labels == largest_object
+
+def rotate_image_3d(im,rot_angles_by_axes,order=[0,1,2]):
+    '''
+    Rotate a 3d image by specified axes, in the specified order.
+
+    Parameters
+    ----------
+    im : np.array
+        3d image (only)
+    rot_angles_by_axes : list or np.array
+        Angles in DEGREES. The order corresponds to each axis of rotation. For example,
+        if the axes of im are: [Z,Y,X], then the angles = [a,b,c] specified are:
+            
+            a - rotation about the z axis
+            b - rotation about the y axis
+            c - rotation about the x axis
+            
+    order : TYPE, optional
+        order of operation. Default is [0,1,2]
+
+    Returns
+    -------
+    im : TYPE
+        rotated image.
+
+    '''
+    assert(im.ndim == 3)
+    assert(len(rot_angles_by_axes) == 3)
+    rot_angles_by_axes = np.array(rot_angles_by_axes)
+    
+    # @todo: reorder for non default order
+    
+    axes = [[0,1],[0,2],[1,2]]
+    for i,angle in enumerate(rot_angles_by_axes):
+        im = ndimage.rotate(im, angle = angle, axes = axes[i])
+    
+    # T = transform.EuclideanTransform(rotation=euler_angles,dimensionality=3)
+    # im = transform.warp(im,T)
+    return im
+
+
+def get_mask_slices(prop, max_dims, border = 0):
+    
+    zmin,ymin,xmin,zmax,ymax,xmax = prop['bbox']
+    zmin = max(0,zmin - border)
+    ymin = max(0,ymin - border)
+    xmin = max(0,xmin - border)
+    
+    (ZZ,YY,XX) = max_dims
+    zmax = min(ZZ,zmax + border)
+    ymax = min(YY,ymax + border)
+    xmax = min(XX,xmax + border)
+    
+    slc = [slice(None)] * 3
+    
+    slc[0] = slice( int(zmin),int(zmax))
+    slc[1] = slice(int(ymin),int(ymax))
+    slc[2] = slice(int(xmin),int(xmax))
+    
+    return slc
 
 
 def fill_in_cube(img,coordinates,label,size=5):
@@ -74,27 +145,120 @@ def draw_adjmat_on_image(A,vert_coords,im_shape):
             im[rr,cc] = idx+1
             
     return im
-        
 
-def draw_adjmat_on_image_3d(A,vert_coords,im_shape):
-    # assert 2d coords!!
-    assert(vert_coords.shape[1] == 3)
+def adjdict_to_mat(adjdict:dict):
+    I = []; J = []
+    for center,neighbors in adjdict.items():
+        for n in neighbors:
+            I.append(center)
+            J.append(n)
+    I = np.array(I).astype(int)
+    J = np.array(J).astype(int)
+    V = np.ones(len(I)).astype(int)
+    
+    return sparse.coo_array( (V, (I,J)))
+
+def draw_thick_line(volume, start, end, radius=2, value=255):
+    """
+    Draw a thick 3D line into a 3D numpy array (volume) by placing
+    spheres along a line from `start` to `end`.
+
+    Parameters:
+    - volume: np.ndarray, shape (Z, Y, X)
+        The 3D volume to modify.
+    - start, end: tuple of int
+        Start and end points of the line, in (z, y, x) format.
+    - radius: int
+        Radius of the spherical thickness (in voxels).
+    - value: int
+        The value to assign to the voxels in the thick line.
+    """
+    # Compute line coordinates
+    z_coords, y_coords, x_coords = draw.line_nd(start, end)
+
+    # Get ball structuring element and its offset positions
+    ball_mask = morphology.ball(radius)
+    dz, dy, dx = np.where(ball_mask)  # coordinates of 1s in the ball
+    dz -= radius
+    dy -= radius
+    dx -= radius
+
+    # Iterate over each point in the line
+    for zc, yc, xc in zip(z_coords, y_coords, x_coords):
+        # Calculate voxel positions for the ball centered at (zc, yc, xc)
+        zz = dz + zc
+        yy = dy + yc
+        xx = dx + xc
+
+        # Clip to volume bounds
+        inside = (zz >= 0) & (zz < volume.shape[0]) & \
+                 (yy >= 0) & (yy < volume.shape[1]) & \
+                 (xx >= 0) & (xx < volume.shape[2])
+
+        volume[zz[inside], yy[inside], xx[inside]] = value
+    return volume
+
+def draw_adjmat_on_image_3d(A,
+                            vert_coords:pd.DataFrame,
+                            im_shape:Iterable[int],
+                            line_width:int=1,
+                            colorize:bool=False):
+    '''
+    Convert a adjacency matrix and corresponding 3D coordinates into a 3D image
+
+    Parameters
+    ----------
+    A : array (numpy or sparse)
+        (Sparse) sdjacency matrix where each vertex is an element in vert_coords
+    vert_coords : pd.DataFrame
+        vertex coordiates in 3D, labelled by the same index given in A.
+        with columns 'Z' 'Y' 'X'
+    im_shape : Iterable[int]
+        the 3d shape of 3d Image to generate
+    line_width: int
+        width of connecting lines. Default is 1
+    colorize: bool
+        whether to put the correct 'label' on the half of each line segment that
+        emenates from the centroid. Default is False, which sets all segments to 255.
+
+    Returns
+    -------
+    im : np.array
+        Image of the connectivity graph represented by A
+
+    '''
+    # assert 3d coords
+    assert('Z' in vert_coords.columns)
     im = np.zeros(im_shape)
-    num_verts = A.shape[0]
+    # num_verts = A.shape[0]
     
     # To avoid double drawing, trim to upper triangle
     # NB: diagonal should be 0
-    A = np.triu(A)
+    # Convert matrix to COO sprase for fast I/J interation
+    A = sparse.coo_array(A)
+    A = sparse.triu(A)
     
-    for idx in range(num_verts):
-        this_coord = np.round(vert_coords[idx,...]).astype(int)
-        neighbor_idx = np.where(A[idx])[0]
+    for src,dest in zip(A.row, A.col):
+        this_coord = np.round(vert_coords.loc[src][['Z','Y','X']]).astype(int)
+        neighbor_coord = np.round(vert_coords.loc[dest][['Z','Y','X']]).astype(int)
         
-        for neighbor in neighbor_idx:
-            neighbor_coord = np.round(vert_coords[neighbor,...]).astype(int)
-            # print(neighbor_coord)
-            lin = draw.line_nd(this_coord,neighbor_coord)
-            im[lin] = idx + 1
+        if not colorize:
+            if line_width == 1:
+                mask = draw.line_nd(this_coord,neighbor_coord)
+                im[mask] = 255
+            else:
+                im = draw_thick_line(im,this_coord,neighbor_coord,radius =line_width, value=255)
+        else:
+            half_way = np.round( (this_coord + neighbor_coord) /2 )
+            if line_width == 1:
+                mask = draw.line_nd(this_coord,half_way)
+                im[mask] = src
+                mask = draw.line_nd(neighbor_coord,half_way)
+                im[mask] = dest
+            else:
+                im = draw_thick_line(im,this_coord,half_way,radius =line_width, value=src)
+                im = draw_thick_line(im,neighbor_coord,half_way,radius =line_width, value=dest)
+
     return im
 
 
@@ -145,4 +309,35 @@ def gaussian_blur_3d(image,sigma_xy=1,sigma_z=1):
             im_blur[:,y,x] = filters.gaussian(image[:,y,x], sigma=sigma_z)
     
     return im_blur
+
+
+def normalize_exposure_by_axis(im_stack:np.array, axis:int=0):
+    '''
+    Uses histogram normalization to re-normalize the intensity of an image stack
+    along the given axis. Image stack has to be >3D.
+
+    Parameters
+    ----------
+    im_stack : np.array
+        input >3D image stack.
+    axis : int, optional
+        axis of normalization. The default is 0.
+
+    Returns
+    -------
+    normalized_stack : np.array
+
+    '''
+    
+    assert(im_stack.ndim > 2)
+    # Move the axis to the 0th
+    im_stack = np.moveaxis(im_stack,axis,0)
+    
+    normalized_stack = np.zeros_like(im_stack)
+    for i,im in enumerate(im_stack):
+        normalized_stack[i,...] = exposure.equalize_hist(im)
+    
+    normalized_stack = np.moveaxis(normalized_stack,0,axis)
+    return normalized_stack
+    
 
