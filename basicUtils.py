@@ -204,7 +204,7 @@ def smooth(x,window_len=11,window='hanning'):
     return y
 
 def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
-                   style='errorbar',minimum_n=25,bin_style='equal'):
+                   style='errorbar',minimum_n=10,bin_style='equal'):
     """
     Plot the mean/std values of Y given bin_edges in X
     
@@ -214,7 +214,7 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
         mean - 'mean' or 'median'
         error - 'sem' (default) for standard error of mean or 'std' for standard deviation
         color - color to pass to errorbar
-        minimum_n - minimum # of points per bin (default = 25)
+        minimum_n - minimum # of points per bin (default = 10)
     
     RETURN:
         mean,std
@@ -236,15 +236,11 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
             bin_edges = np.linspace(X_min,X_max,num=bin_edges)
         elif bin_style == 'percentile':
             bin_edges = np.percentile(nonans(X),np.linspace(0,100,num=bin_edges))
-            print(bin_edges)
-    else:
-        raise ValueError
-    print(X)
+
     which_bin = np.digitize(X,bin_edges)
     Nbins = len(bin_edges)-1
     means = np.zeros(Nbins)
     stds = np.zeros(Nbins)
-    
     
     # bin_centers = np.zeros(Nbins)
     
@@ -262,7 +258,6 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
             if mean == 'mean':
                 means[b] = np.nanmean(y)
             elif mean == 'median':
-                print(f'{y.shape}')
                 means[b] = np.nanmedian(y)
     
             if error == 'sem':
