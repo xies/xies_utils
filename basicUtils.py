@@ -14,7 +14,11 @@ import math
 from SelectFromCollection import SelectFromCollection
 from matplotlib.path import Path
 from scipy import stats
+from re import match
 
+def sort_by_timestamp(filename):
+    t = match('t(\d+).tif',filename).groups[0]
+    return int(t)
 
 def euclidean_distance(X,Y):
     X = np.array(X,dtype=float)
