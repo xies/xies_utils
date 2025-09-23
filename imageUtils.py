@@ -98,7 +98,16 @@ def trim_image_to_bounding_box(mask:np.array, border:int=5):
     trimmed_mask = mask[slc[0],slc[1],slc[2]]
     return trimmed_mask
 
-def filter_seg_by_largest_object(mask):
+def filter_seg_by_largest_object(seg):
+    all_labels = np.unique(seg)[1:]
+    new_seg = np.zeros_like(seg)
+    for label in all_labels:
+        mask = seg == label
+        new_mask = filter_mask_by_largest_object(mask)
+        new_seg[new_mask] = label
+    return new_seg
+    
+def filter_mask_by_largest_object(mask):
     labels = measure.label(mask)
     df = pd.DataFrame(measure.regionprops_table(labels, properties=['label','area']))
     df = df.sort_values(by='area',ascending=False)
