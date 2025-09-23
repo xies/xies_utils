@@ -14,6 +14,22 @@ from numpy import random
 # from scipy import stats
 import pandas as pd
 from scipy.interpolate import UnivariateSpline
+import matplotlib.pyplot as plt
+
+def normplot(x,ticks_perc=[1, 5, 10, 20, 50, 80, 90, 95, 99],color='b',alpha=0.2):
+    # Calculate quantiles and least-square-fit curve
+    (quantiles, values), (slope, intercept, r) = stats.probplot(x, dist='norm')
+
+    #plot results
+    plt.scatter(values, quantiles,color=color, alpha=alpha)
+    plt.plot(quantiles * slope + intercept, quantiles, 'r')
+
+    #transfrom them from precentile to cumulative density
+    ticks_quan=[stats.norm.ppf(i/100.) for i in ticks_perc]
+
+    #assign new ticks
+    plt.yticks(ticks_quan,ticks_perc)
+
 
 def exponential_growth(t,V0,k):
     return V0*np.exp(t*k)
@@ -29,16 +45,16 @@ def get_interpolated_curve(cf,y_field='Volume',x_field='Age',smoothing_factor=1e
     if len(cf) < 4:
         yhat = cf[y_field].values
         dydt = np.ones(len(cf)) * np.nan
-        
+
     else:
         t = cf[x_field].values
         v = cf[y_field].values
         # Spline smooth
         spl = UnivariateSpline(t, v, k=3, s=smoothing_factor)
         yhat = spl(t)
-        
+
         dydt = spl.derivative(n=1)(t)
-        
+
         # # Nuclear volume
         # nv = cf.Nucleus.values
         # # Spline smooth
@@ -170,10 +186,10 @@ def cv_difference_pvalue(x,y,Nboot, subsample=None):
         x = x.values
     if isinstance(y,pd.Series):
         y = y.values
-    
+
     _CVx = np.array([stats.variation(x[random.randint(low=0,high=len(x),size=subsample)]) for i in range(Nboot)])
     _CVy = np.array([stats.variation(y[random.randint(low=0,high=len(y),size=subsample)]) for i in range(Nboot)])
-    
+
     P = (_CVx < _CVy).sum() / Nboot
     return P
 
