@@ -15,6 +15,77 @@ import pandas as pd
 from typing import Iterable
 from functools import reduce
 from aicsshparam import shtools
+from skimage import filters
+from mathUtils import normxcorr2
+
+def normalize_image_intensity_signed(float_image, range=[-1,1]):
+    max_int = float_image.max()
+    min_int = float_image.min()
+    abs_max_range = max(max_int,abs(min_int))
+
+    return float_image/abs_max_range
+
+
+def find_most_likely_z_slice_using_CC(ref_slice:int,stack) -> int:
+    '''
+
+    Parameters
+    ----------
+    ref_slice : YxX array
+        Single slice of reference image
+    stack : 3xYxX array
+        A z-stack image to find the slice correspoinding to ref_slice.
+
+    Returns
+    -------
+    Iz : int
+        index in stack of the corresponding ref_slice.
+
+    '''
+    assert(ref_slice.ndim == 2)
+    assert(stack.ndim == 3)
+    XX = stack.shape[1]
+    CC = np.zeros((stack.shape[0],XX * 2 - 1,XX * 2 -1))
+
+    print('Cross correlation started')
+    for i,B_slice in enumerate(stack):
+        B_slice = filters.gaussian(B_slice,sigma=0.5)
+        CC[i,...] = normxcorr2(ref_slice,B_slice,mode='full')
+    [Iz,y_shift,x_shift] = np.unravel_index(CC.argmax(),CC.shape) # Iz refers to B channel
+    return Iz
+
+def z_translate_and_pad(im_ref,im_moving,z_ref,z_moving,):
+    '''
+    Takes two z-stacks and translate the im_moving so that z_ref and z_moving will end up
+    being the same index in the translated image. Will also truncate/pad im_moving
+    to be the same size as im_ref
+
+    '''
+    XX = im_moving.shape[1]
+
+    # Bottom padding
+    bottom_padding = z_ref - z_moving
+    if bottom_padding > 0: # the needs padding
+        im_padded = np.concatenate( (np.zeros((bottom_padding,XX,XX)),im_moving), axis= 0)
+    elif bottom_padding < 0: # then needs trimming
+        im_padded = im_moving[-bottom_padding:,...]
+    elif bottom_padding == 0:
+        im_padded = im_moving
+
+    top_padding = im_ref.shape[0] - im_padded.shape[0]
+    if top_padding > 0: # the needs padding
+        im_padded = np.concatenate( (im_padded.astype(float), np.zeros((top_padding,XX,XX))), axis= 0)
+    elif top_padding < 0: # then needs trimming
+        im_padded = im_padded[0:top_padding,...]
+
+    # Cut down the z-stack shape
+    Zref = im_ref.shape[0]
+    im_padded = im_padded[:Zref,...]
+
+    assert(np.all(im_ref.shape == im_padded.shape))
+
+    return im_padded
+
 
 def get_pad(current_size:int, target_size:int):
     # https://stackoverflow.com/questions/79413708/how-can-i-make-the-image-centered-while-padding-in-python
@@ -38,7 +109,7 @@ def create_average_object_from_multiple_masks(mask_list:Iterable,prealign:bool=T
 
     if prealign:
         mask_list = [shtools.align_image_2d(m)[0].squeeze() for m in mask_list]
-    
+
     max_size = np.array([m.shape for m in mask_list]).max(axis=0)
     padded_mask = [pad_image_to_size_centered(m,max_size).astype(float) for m in mask_list]
     average_object = np.array(padded_mask).mean(axis=0)
@@ -106,7 +177,7 @@ def filter_seg_by_largest_object(seg):
         new_mask = filter_mask_by_largest_object(mask)
         new_seg[new_mask] = label
     return new_seg
-    
+
 def filter_mask_by_largest_object(mask):
     labels = measure.label(mask)
     df = pd.DataFrame(measure.regionprops_table(labels, properties=['label','area']))
@@ -238,6 +309,14 @@ def draw_adjmat_on_image(A,vert_coords,im_shape):
             im[rr,cc] = idx+1
 
     return im
+
+def adjDict_to_dataframe(adjDict):
+
+    trackIDs = sorted(list(adjDict.keys()))
+    df = pd.DataFrame(0,index=trackIDs,columns=trackIDs)
+    for centerID,neighborIDs in adjDict.items():
+        df.loc[centerID,neighborIDs] = 1
+    return df
 
 def adjdict_to_mat(adjdict:dict):
     I = []; J = []
