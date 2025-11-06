@@ -14,9 +14,6 @@ from scipy import sparse, ndimage
 import pandas as pd
 from typing import Iterable
 from functools import reduce
-from aicsshparam import shtools
-from skimage import filters
-from mathUtils import normxcorr2
 
 def normalize_image_intensity_signed(float_image, range=[-1,1]):
     max_int = float_image.max()
@@ -42,6 +39,9 @@ def find_most_likely_z_slice_using_CC(ref_slice:int,stack) -> int:
         index in stack of the corresponding ref_slice.
 
     '''
+    
+    from mathUtils import normxcorr2
+    
     assert(ref_slice.ndim == 2)
     assert(stack.ndim == 3)
     XX = stack.shape[1]
@@ -106,7 +106,8 @@ def pad_image_to_size_centered(im:np.array,size,pad_value=0):
     return image_padded
 
 def create_average_object_from_multiple_masks(mask_list:Iterable,prealign:bool=True):
-
+    from aicsshparam import shtools
+    
     if prealign:
         mask_list = [shtools.align_image_2d(m)[0].squeeze() for m in mask_list]
 
