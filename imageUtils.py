@@ -14,6 +14,7 @@ from scipy import sparse, ndimage
 import pandas as pd
 from typing import Iterable
 from functools import reduce
+from tqdm import tqdm
 
 def normalize_image_intensity_signed(float_image, range=[-1,1]):
     max_int = float_image.max()
@@ -461,7 +462,7 @@ def colorize_segmentation(seg,value_dict,dtype=int):
 
     assert( len(np.unique(seg[1:]) == len(value_dict)) )
     colorized = np.zeros_like(seg,dtype=dtype)
-    for k,v in value_dict.items():
+    for k,v in tqdm(value_dict.items()):
         colorized[seg == k] = v
     return colorized
 

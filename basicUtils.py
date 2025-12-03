@@ -225,6 +225,8 @@ def plot_bin_means(X,Y,bin_edges=None,mean='median',error='sem',color=None,
     """
     
     assert(X.shape == Y.shape)
+    X = X.astype(float)
+    Y = Y.astype(float)
     
     X,Y = nonan_pairs(X,Y)
     
